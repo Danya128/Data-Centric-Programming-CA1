@@ -4,11 +4,13 @@ My dataset records buses (No 37) punctuality. I take observations on 2 bus stops
 
 
 ## Attribute Descriptions
+
+| Attribute | Description |
 | --- | --- |
-| `Date` | Date of the observation(DD/MM/YYYY) |
-| `Day_of_week` | Week day of the observation |
-| `Scheduled_time` | Expected bus arrival time that's displayed in Google Maps|
+| `Date` | Date of the observation (DD/MM/YYYY) |
+| `Day_of_week` | Day of the week of the observation |
+| `Scheduled_time` | Expected bus arrival time displayed in Google Maps |
 | `Location` | Location of the observation |
-| `Weather` | Wether conditions during the observation |
-| `No_people` | Number of people counted in the bus |
-| `Delay_minutes` | Minutes late, 0 means recorded no delay |
+| `Weather` | Weather conditions during the observation |
+| `No_people` | Number of people counted on the bus |
+| `Delay_minutes` | Minutes late, 0 means that was recorded no delay |
