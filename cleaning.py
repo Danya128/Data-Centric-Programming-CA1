@@ -26,4 +26,5 @@ def clean():
     
     return df
 
-clean()
+if __name__ == "__main__":
+    clean()
