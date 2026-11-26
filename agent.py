@@ -1,75 +1,49 @@
-from pandas.api.types import is_numeric_dtype
-from langchain.tools import tool
-import pandas as pd
-import sqlite3
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
 
-conn = sqlite3.connect("bus_data.db")
-df = pd.read_sql_query("SELECT * FROM bus_trips", conn)
-conn.close()
+from tools import tools
 
-# @tools
-def select_columns(columns:list[str]) -> pd.DataFrame:
-    """Return selected data columns. Use exact column names"""
-    return df[columns]
+MODEL = "gpt-5.6-luna"
 
-#---------------------#
-# Aggregate functions #
-#---------------------#
+SYSTEM_PROMPT = """
+You help users explore bus-trip data using the available tools.
 
-# @tools
-def cols_mean(data:pd.DataFrame) -> pd.Series:
-    """Return means from each selected column"""
-    for col in data.columns:
-        if not is_numeric_dtype(data[col]):
-            return f"Cannot calculate a mean for '{col}': numeric data is required."
-    return data.mean().round(2)
+Columns: Date, Day_of_week, Scheduled_time, Location, Weather,
+No_people (passengers), Delay_minutes (delay in minutes).
 
-# @tools
-def cols_sum(data:pd.DataFrame) -> pd.Series:
-    """Return sums from each selected column"""
-    for col in data.columns:
-        if not is_numeric_dtype(data[col]):
-            return f"Cannot calculate a sum for '{col}': numeric data is required."
-    return data.sum()
+Choose the tool that matches the user's request.
+Use exact column names and the arguments the tool requires.
+Use numeric columns for calculations such as averages and totals.
 
-# @tools
-def cols_min(data:pd.DataFrame) -> pd.Series:
-    """Return mins from each selected column"""
-    for col in data.columns:
-        if not is_numeric_dtype(data[col]):
-            return f"Cannot calculate a min for '{col}': numeric data is required."
-    return data.min()
+Always use tools to get data or calculate results. Never guess.
+If the request is unclear, ask a question.
+If no tool can do the task, explain that briefly.
 
-# @tools
-def cols_max(data:pd.DataFrame) -> pd.Series:
-    """Return maxes from each selected column"""
-    for col in data.columns:
-        if not is_numeric_dtype(data[col]):
-            return f"Cannot calculate a max for '{col}': numeric data is required."
-    return data.max()
+Explain results in simple language or visualize it when using a visualizing tools.
+"""
 
-# @tools
-def cols_count(data:pd.DataFrame) -> pd.Series:
-    """Return number of non-missing values from each selected column"""
-    return data.count()
+USER_PROMPT = input("Your question: ")
 
-# @tools
-def cols_median(data:pd.DataFrame) -> pd.Series:
-    """Return medians from each selected column"""
-    for col in data.columns:
-        if not is_numeric_dtype(data[col]):
-            return f"Cannot calculate a median for '{col}': numeric data is required."
-    return data.median().round(2)
+load_dotenv(override=True)
 
-# @tools
-def cols_unique(data:pd.DataFrame) -> pd.Series:
-    """Return number of distinct non-missing values from each selected column"""
-    return data.nunique()
+llm = ChatOpenAI(temperature = None, model_name = MODEL)
+llm_with_tools = llm.bind_tools(tools, reasoning_effort="none")
 
-# @tools
-def cols_std(data:pd.DataFrame) -> pd.Series:
-    """Return standard deviations from each selected column"""
-    for col in data.columns:
-        if not is_numeric_dtype(data[col]):
-            return f"Cannot calculate a standard deviation for '{col}': numeric data is required."
-    return data.std().round(2)
+messages = [
+    SystemMessage(content=SYSTEM_PROMPT),
+    HumanMessage(content=USER_PROMPT)
+]
+
+response = llm_with_tools.invoke(messages)
+
+available_tools = {tool.name: tool for tool in tools}
+
+if not response.tool_calls:
+    print(response.content)
+
+for tool_call in response.tool_calls:
+    selected_tool = available_tools[tool_call["name"]]
+    result = selected_tool.invoke(tool_call["args"])
+
+    print("Result:", result)
