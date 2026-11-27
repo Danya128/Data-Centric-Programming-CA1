@@ -44,14 +44,17 @@ def chat(message, history):
     chart = None
     
     for call in response.tool_calls:
+        # Example of call: 
+        # {"name": "cols_mean",
+        # "args": {"columns": ["No_people"]}}
         selected_tool = available_tools[call["name"]]
-        result = selected_tool.invoke(call["args"])
+        result = selected_tool.invoke(call["args"]) # -> cols_mean.invoke({"columns": ["No_people"]})
         if isinstance(result, Figure):
-            chart = result
+            chart = result # -> chat conversation
             reply += "Here is your chart\n"
         else:
             reply += str(result) + "\n"
-    return reply, chart
+    return reply, chart # -> plot components
 
 
 with gr.Blocks() as app:
